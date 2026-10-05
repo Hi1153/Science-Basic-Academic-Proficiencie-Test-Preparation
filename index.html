@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#f5f6f8">
+<title>理科 基礎学力テスト対策</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#f3f4f6;color:#202124;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Yu Gothic",sans-serif}
+body{min-height:100vh}
+button,input{font:inherit}
+.header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #ddd}
+.header-inner{max-width:900px;margin:auto;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.title{font-weight:700;font-size:18px}
+.timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:16px}
+.main{max-width:900px;margin:auto;padding:18px 14px 110px}
+.card{background:#fff;border:1px solid #ddd;border-radius:12px;margin-bottom:14px;padding:18px;box-shadow:0 1px 3px #0000000a}
+.start{text-align:center;padding:34px 18px}
+h1{font-size:25px;margin:0 0 8px}
+h2{font-size:18px;margin:0 0 12px}
+p{line-height:1.7}
+.info{background:#f7f8fa;border-radius:10px;padding:14px;text-align:left;font-size:14px;line-height:1.8}
+.primary,.secondary,.danger{border:0;border-radius:9px;padding:12px 18px;font-weight:700;cursor:pointer}
+.primary{background:#1a73e8;color:#fff}
+.secondary{background:#eef1f5;color:#202124}
+.danger{background:#d93025;color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+.hidden{display:none!important}
+.progress-wrap{background:#e1e4e8;height:7px;border-radius:99px;overflow:hidden;margin-bottom:16px}
+.progress{height:100%;background:#1a73e8;width:0%;transition:.2s}
+.question-number{font-size:13px;color:#666;margin-bottom:7px}
+.question-text{font-size:17px;font-weight:700;line-height:1.7;margin-bottom:15px}
+.short-input{width:100%;padding:14px;border:1px solid #c8ccd1;border-radius:8px;outline:none;background:#fff;font-size:17px}
+.short-input:focus{border-color:#1a73e8;box-shadow:0 0 0 2px #1a73e822}
+.nav{display:flex;justify-content:space-between;gap:8px;position:sticky;bottom:10px;z-index:5}
+.nav button{flex:1}
+.question-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+.q-dot{border:1px solid #ccd0d5;background:#fff;border-radius:7px;height:34px;cursor:pointer;font-size:12px}
+.q-dot.answered{background:#eaf2ff;border-color:#1a73e8;color:#135db8}
+.q-dot.current{box-shadow:0 0 0 2px #1a73e8 inset;font-weight:700}
+.result-score{text-align:center;font-size:44px;font-weight:800;margin:15px 0 4px}
+.result-sub{text-align:center;color:#666}
+.answer-row{border-top:1px solid #ddd;padding:14px 0;line-height:1.7}
+.correct{color:#188038;font-weight:700}
+.incorrect{color:#d93025;font-weight:700}
+.answer{margin-top:6px;padding:9px 11px;background:#f7f8fa;border-radius:7px}
+.category{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:#eef1f5;color:#555;margin-bottom:9px}
+.retry-info{background:#fff8e1;border:1px solid #f0d98a;border-radius:10px;padding:13px;font-size:14px;line-height:1.7;margin-top:14px}
+@media(max-width:600px){
+.main{padding:12px 10px 100px}
+.card{padding:15px}
+.question-text{font-size:16px}
+.question-grid{grid-template-columns:repeat(8,1fr)}
+.q-dot{height:32px}
+.header-inner{padding:11px 12px}
+.title{font-size:16px}
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+<div class="header-inner">
+<div class="title">理科 基礎学力テスト対策</div>
+<div id="timer" class="timer">45:00</div>
+</div>
+</header>
+
+<main class="main">
+
+<section id="startScreen" class="card start">
+<h1>理科 基礎学力テスト</h1>
+<p>生物・化学・物理・地学<br>中学校1・2年生の総復習</p>
+
+<div class="info">
+<b>テストについて</b><br>
+・全100問<br>
+・中学1・2年生の全範囲<br>
+・制限時間 45分<br>
+・全問入力式
+</div>
+
+<div class="actions">
+<button class="primary" onclick="startTest()">テストを開始</button>
+</div>
+
+<div id="retryArea"></div>
+</section>
+
+<section id="testScreen" class="hidden">
+
+<div class="card">
+<div class="progress-wrap">
+<div id="progress" class="progress"></div>
+</div>
+
+<div id="question"></div>
+</div>
+
+<div class="card">
+<div style="font-weight:700;margin-bottom:10px">問題一覧</div>
+<div id="questionGrid" class="question-grid"></div>
+</div>
+
+<div class="nav">
+<button id="prevBtn" class="secondary" onclick="prevQuestion()">← 前の問題</button>
+<button id="nextBtn" class="primary" onclick="nextQuestion()">次の問題 →</button>
+</div>
+
+</section>
+
+<section id="resultScreen" class="hidden">
+
+<div class="card">
+<h2 style="text-align:center">テスト結果</h2>
+
+<div id="score" class="result-score">0 / 100</div>
+<div id="percentage" class="result-sub">0%</div>
+<div id="resultMessage" style="text-align:center;margin-top:15px;font-weight:700"></div>
+
+<div id="retryResultArea"></div>
+
+<div class="actions">
+<button class="primary" onclick="showAnswers()">正答・解説を見る</button>
+<button class="secondary" onclick="location.reload()">もう一度受ける</button>
+</div>
+</div>
+
+<div id="answerScreen" class="card hidden">
+<h2>正答・解説</h2>
+<div id="answers"></div>
+</div>
+
+</section>
+
+</main>
+
+<script>
+
+const questions=[
+
+/* =========================
+   生物 25問
+========================= */
+
+{c:"生物",q:"植物のからだで、光合成を主に行う器官は何か。",a:["葉","は"],e:"葉の細胞にある葉緑体で光合成が行われます。"},
+{c:"生物",q:"植物の細胞にあり、光合成を行う緑色の小さな構造を何というか。",a:["葉緑体","ようりょくたい"],e:"葉緑体には葉緑素があり、光合成を行います。"},
+{c:"生物",q:"光合成で植物が空気中から取り入れる気体は何か。",a:["二酸化炭素","にさんかたんそ"],e:"光合成では二酸化炭素と水から養分をつくります。"},
+{c:"生物",q:"光合成によってつくられる養分は何か。",a:["デンプン","でんぷん"],e:"光合成によってデンプンなどの養分がつくられます。"},
+{c:"生物",q:"植物が根から吸収した水が、茎を通って運ばれる管を何というか。",a:["道管","どうかん"],e:"道管は根から吸収した水や無機養分を運びます。"},
+{c:"生物",q:"葉でつくられた養分を運ぶ管を何というか。",a:["師管","しかん"],e:"師管は葉でつくられた養分を植物の各部分へ運びます。"},
+{c:"生物",q:"植物の葉にあり、気体の出入りを行う小さな穴を何というか。",a:["気孔","きこう"],e:"気孔から二酸化炭素などの気体が出入りします。"},
+{c:"生物",q:"根の先端近くにあり、水や無機養分を吸収する細い毛を何というか。",a:["根毛","こんもう"],e:"根毛は土壌と接する面積を大きくして吸収を助けます。"},
+{c:"生物",q:"花粉がめしべの柱頭につくことを何というか。",a:["受粉","じゅふん"],e:"花粉が柱頭につくことを受粉といいます。"},
+{c:"生物",q:"受粉後、胚珠が成長してできるものは何か。",a:["種子","しゅし"],e:"受精後、胚珠は種子になります。"},
+{c:"生物",q:"受粉後、子房が成長してできるものは何か。",a:["果実","かじつ"],e:"受精後、子房は果実になります。"},
+{c:"生物",q:"動物の細胞にあって、遺伝情報を含む部分を何というか。",a:["核","かく"],e:"核には遺伝情報を含むDNAがあります。"},
+{c:"生物",q:"細胞の外側を包み、物質の出入りを調節する部分を何というか。",a:["細胞膜","さいぼうまく"],e:"細胞膜は細胞の内外を隔て、物質の出入りを調節します。"},
+{c:"生物",q:"植物の細胞にあり、細胞膜の外側を囲む丈夫なつくりを何というか。",a:["細胞壁","さいぼうへき"],e:"細胞壁は植物細胞を支えます。"},
+{c:"生物",q:"細胞の中で、生命活動に必要なエネルギーを取り出すはたらきをする器官を何というか。",a:["ミトコンドリア"],e:"ミトコンドリアでは呼吸によってエネルギーが取り出されます。"},
+{c:"生物",q:"生物が酸素を使って養分からエネルギーを取り出すはたらきを何というか。",a:["呼吸","こきゅう"],e:"呼吸では養分と酸素からエネルギーを取り出します。"},
+{c:"生物",q:"消化された養分を小腸から血液中に取り込むことを何というか。",a:["吸収","きゅうしゅう"],e:"小腸では消化された養分が吸収されます。"},
+{c:"生物",q:"デンプンを分解する消化液に含まれる消化酵素を何というか。",a:["アミラーゼ"],e:"アミラーゼはデンプンを分解する消化酵素です。"},
+{c:"生物",q:"血液中で酸素を運ぶはたらきをする赤血球に含まれる物質は何か。",a:["ヘモグロビン","へもぐろびん"],e:"ヘモグロビンは酸素と結びついて酸素を運びます。"},
+{c:"生物",q:"血液を全身に送り出すポンプのような器官は何か。",a:["心臓","しんぞう"],e:"心臓は血液を全身へ送り出します。"},
+{c:"生物",q:"肺で、酸素と二酸化炭素の交換を行う小さな袋状の部分を何というか。",a:["肺胞","はいほう"],e:"肺胞の周囲には毛細血管があり、ガス交換が行われます。"},
+{c:"生物",q:"外界からの刺激を受け取る器官を何というか。",a:["感覚器官","かんかくきかん"],e:"目・耳・鼻・舌・皮膚などが感覚器官です。"},
+{c:"生物",q:"刺激を受け取ってから反応するまでの命令を伝える神経を何というか。",a:["運動神経","うんどうしんけい"],e:"運動神経は中枢神経から筋肉などへ命令を伝えます。"},
+{c:"生物",q:"脳やせきずいをまとめて何というか。",a:["中枢神経","ちゅうすうしんけい"],e:"脳とせきずいを中枢神経といいます。"},
+{c:"生物",q:"親の形質が子に伝わることを何というか。",a:["遺伝","いでん"],e:"親の形質が子孫に伝わることを遺伝といいます。"},
+
+/* =========================
+   化学 25問
+========================= */
+
+{c:"化学",q:"物質をつくっている最小の粒を何というか。",a:["原子","げんし"],e:"物質を構成する基本的な粒子を原子といいます。"},
+{c:"化学",q:"原子がいくつか結びついてできた粒を何というか。",a:["分子","ぶんし"],e:"酸素分子や水分子などがあります。"},
+{c:"化学",q:"酸素を化学式で表すと何か。",a:["O2","o2"],e:"酸素は2個の酸素原子からなるO2です。"},
+{c:"化学",q:"水を化学式で表すと何か。",a:["H2O","h2o"],e:"水は水素2個と酸素1個からできています。"},
+{c:"化学",q:"二酸化炭素を化学式で表すと何か。",a:["CO2","co2"],e:"二酸化炭素は炭素1個と酸素2個からなります。"},
+{c:"化学",q:"酸素の中で物質が激しく熱や光を出しながら反応することを何というか。",a:["燃焼","ねんしょう"],e:"燃焼は酸素との反応で熱や光を出す現象です。"},
+{c:"化学",q:"物質が酸素と結びつく化学変化を何というか。",a:["酸化","さんか"],e:"酸素と結びつく化学変化を酸化といいます。"},
+{c:"化学",q:"酸化物から酸素を取り除く化学変化を何というか。",a:["還元","かんげん"],e:"酸素を失う化学変化を還元といいます。"},
+{c:"化学",q:"鉄が酸素と結びついてできる物質を何というか。",a:["酸化鉄","さんかてつ"],e:"鉄が酸化すると酸化鉄ができます。"},
+{c:"化学",q:"銅を加熱すると表面にできる黒色の物質は何か。",a:["酸化銅","さんかどう"],e:"銅が酸化して黒色の酸化銅になります。"},
+{c:"化学",q:"化学変化の前後で、原子の種類と数が変わらないことを何というか。",a:["質量保存の法則","しつりょうほぞんのほうそく"],e:"化学変化では原子そのものがなくなったり新しくできたりしません。"},
+{c:"化学",q:"水に物質がとけて均一になった液体を何というか。",a:["水溶液","すいようえき"],e:"水に物質が均一に溶けたものを水溶液といいます。"},
+{c:"化学",q:"水に溶けている物質を何というか。",a:["溶質","ようしつ"],e:"食塩水なら食塩が溶質です。"},
+{c:"化学",q:"溶質を溶かしている液体を何というか。",a:["溶媒","ようばい"],e:"食塩水なら水が溶媒です。"},
+{c:"化学",q:"一定量の水に溶かすことのできる物質の最大量を何というか。",a:["溶解度","ようかいど"],e:"温度によって溶解度は変化します。"},
+{c:"化学",q:"水溶液の濃さを、溶質の質量の割合で表す濃度を何というか。",a:["質量パーセント濃度","質量パーセントのうど"],e:"溶質の質量÷水溶液の質量×100で求めます。"},
+{c:"化学",q:"酸性の水溶液に共通して含まれるイオンは何か。",a:["水素イオン","H+"],"e":"酸性の水溶液には水素イオンが多く存在します。"},
+{c:"化学",q:"アルカリ性の水溶液に共通して含まれるイオンは何か。",a:["水酸化物イオン","OH-"],e:"アルカリ性の水溶液には水酸化物イオンが多く存在します。"},
+{c:"化学",q:"酸性・アルカリ性の強さを表す数値を何というか。",a:["pH","ピーエイチ"],e:"pHは7を中性として、数値で酸性・アルカリ性の程度を表します。"},
+{c:"化学",q:"酸性の水溶液とアルカリ性の水溶液を混ぜて、互いの性質を打ち消す反応を何というか。",a:["中和","ちゅうわ"],e:"酸とアルカリが反応して互いの性質を打ち消します。"},
+{c:"化学",q:"塩酸と水酸化ナトリウム水溶液を中和させるとできる塩は何か。",a:["塩化ナトリウム","えんかナトリウム"],e:"塩酸と水酸化ナトリウムから塩化ナトリウムと水ができます。"},
+{c:"化学",q:"電解質の水溶液に電流を流したとき、陽極へ移動するイオンを何というか。",a:["陰イオン","いんイオン"],e:"陰イオンは正極である陽極へ移動します。"},
+{c:"化学",q:"電解質の水溶液に電流を流したとき、陰極へ移動するイオンを何というか。",a:["陽イオン","ようイオン"],e:"陽イオンは負極である陰極へ移動します。"},
+{c:"化学",q:"電流を流すと電気分解できる水溶液などの物質を何というか。",a:["電解質","でんかいしつ"],e:"水に溶けて電離し、電流を通す物質を電解質といいます。"},
+{c:"化学",q:"電解質が水に溶けたとき、陽イオンと陰イオンに分かれることを何というか。",a:["電離","でんり"],e:"電離によってイオンが生じます。"},
+
+/* =========================
+   物理 25問
+========================= */
+
+{c:"物理",q:"物体がその運動を続けようとする性質を何というか。",a:["慣性","かんせい"],e:"物体には現在の運動状態を保とうとする慣性があります。"},
+{c:"物理",q:"物体の運動の速さを表す量を何というか。",a:["速さ","はやさ"],e:"速さは単位時間あたりに進む距離です。"},
+{c:"物理",q:"速さを求める公式を答えよ。",a:["道のり÷時間","みちのり÷じかん"],e:"速さ＝道のり÷時間です。"},
+{c:"物理",q:"力の大きさを表す単位は何か。",a:["ニュートン","N","にゅーとん"],e:"力の単位にはニュートン（N）を使います。"},
+{c:"物理",q:"地球が物体を地面に引きつける力を何というか。",a:["重力","じゅうりょく"],e:"地球が物体に及ぼす引力を重力といいます。"},
+{c:"物理",q:"物体が面から受ける、面に垂直な力を何というか。",a:["垂直抗力","すいちょくこうりょく"],e:"机の上の物体などが机から受ける力です。"},
+{c:"物理",q:"ばねの伸びが大きくなるほど、ばねが物体を引く力も大きくなる法則を何というか。",a:["フックの法則","ふっくのほうそく"],e:"ばねの伸びとばねの力は一定の範囲で比例します。"},
+{c:"物理",q:"物体に力がはたらき、力の向きに物体が移動したとき、その力が物体にしたことを何というか。",a:["仕事","しごと"],e:"仕事＝力×力の向きに移動した距離です。"},
+{c:"物理",q:"仕事の単位は何か。",a:["ジュール","J","じゅーる"],e:"仕事の単位にはジュール（J）を使います。"},
+{c:"物理",q:"道具を使っても仕事の量そのものは変わらないという考え方を何というか。",a:["仕事の原理","しごとのげんり"],e:"てこや滑車などでも理想的には仕事の量は変わりません。"},
+{c:"物理",q:"物体が高いところにあることによって持つエネルギーを何というか。",a:["位置エネルギー","いちエネルギー"],e:"高さや質量が大きいほど位置エネルギーは大きくなります。"},
+{c:"物理",q:"運動している物体が持つエネルギーを何というか。",a:["運動エネルギー","うんどうエネルギー"],e:"速さや質量が大きいほど運動エネルギーは大きくなります。"},
+{c:"物理",q:"位置エネルギーと運動エネルギーの和を何というか。",a:["力学的エネルギー","りきがくてきエネルギー"],e:"位置エネルギーと運動エネルギーの合計を力学的エネルギーといいます。"},
+{c:"物理",q:"音を伝える物質を何というか。",a:["媒質","ばいしつ"],e:"音は空気などの媒質を通して伝わります。"},
+{c:"物理",q:"音の高さは何によって決まるか。",a:["振動数","しんどうすう"],e:"振動数が多いほど高い音になります。"},
+{c:"物理",q:"音の大きさは主に何によって決まるか。",a:["振幅","しんぷく"],e:"振幅が大きいほど大きな音になります。"},
+{c:"物理",q:"光が鏡などの面に当たってはね返る現象を何というか。",a:["反射","はんしゃ"],e:"光が物体の表面ではね返る現象を反射といいます。"},
+{c:"物理",q:"光が空気から水など、異なる物質の境界で進む向きが変わる現象を何というか。",a:["屈折","くっせつ"],e:"異なる物質へ進むとき光の進む向きが変化します。"},
+{c:"物理",q:"凸レンズで、光軸に平行に入った光が集まる点を何というか。",a:["焦点","しょうてん"],e:"凸レンズには左右に焦点があります。"},
+{c:"物理",q:"電流の流れにくさを表す量を何というか。",a:["電気抵抗","でんきていこう"],e:"電気抵抗の単位はオーム（Ω）です。"},
+{c:"物理",q:"電圧・電流・抵抗の関係を表す法則を何というか。",a:["オームの法則","おーむのほうそく"],e:"電圧＝電流×抵抗です。"},
+{c:"物理",q:"電流の単位は何か。",a:["アンペア","A","あんぺあ"],e:"電流の単位はアンペア（A）です。"},
+{c:"物理",q:"電圧の単位は何か。",a:["ボルト","V","ぼると"],e:"電圧の単位はボルト（V）です。"},
+{c:"物理",q:"電力を求める公式を答えよ。",a:["電圧×電流","でんあつ×でんりゅう"],e:"電力＝電圧×電流です。"},
+
+/* =========================
+   地学 25問
+========================= */
+
+{c:"地学",q:"地球を取り巻く気体の層を何というか。",a:["大気","たいき"],e:"地球を取り巻く気体を大気といいます。"},
+{c:"地学",q:"大気中で最も多く含まれている気体は何か。",a:["窒素","ちっそ"],e:"大気の約78％は窒素です。"},
+{c:"地学",q:"大気中で約21％を占める気体は何か。",a:["酸素","さんそ"],e:"酸素は大気の約21％を占めます。"},
+{c:"地学",q:"空気中の水蒸気が冷やされて水滴になることを何というか。",a:["凝結","ぎょうけつ"],e:"水蒸気が冷えて水滴になる現象を凝結といいます。"},
+{c:"地学",q:"空気が含むことのできる水蒸気量の限界を何というか。",a:["飽和水蒸気量","ほうわすいじょうきりょう"],e:"気温が高いほど飽和水蒸気量は大きくなります。"},
+{c:"地学",q:"空気中に含まれる水蒸気の割合を何というか。",a:["湿度","しつど"],e:"湿度は空気の湿り具合を表します。"},
+{c:"地学",q:"水蒸気を含んだ空気が上昇して冷やされるとできるものは何か。",a:["雲","くも"],e:"上昇した空気が冷えて水蒸気が凝結すると雲ができます。"},
+{c:"地学",q:"雲から雨や雪などが地表に降ってくることを何というか。",a:["降水","こうすい"],e:"雨・雪・あられなどが降水です。"},
+{c:"地学",q:"地表付近の空気の圧力を何というか。",a:["気圧","きあつ"],e:"気圧は空気の重さなどによって生じます。"},
+{c:"地学",q:"周囲より気圧が高いところを何というか。",a:["高気圧","こうきあつ"],e:"高気圧では一般に下降気流が生じます。"},
+{c:"地学",q:"周囲より気圧が低いところを何というか。",a:["低気圧","ていきあつ"],e:"低気圧では上昇気流が生じやすく、雲ができやすいです。"},
+{c:"地学",q:"風は基本的に気圧の高い方から低い方へ吹くか。",a:["高い方から低い方","たかいほうからひくいほう"],e:"風は気圧差によって生じます。"},
+{c:"地学",q:"同じ気圧の地点を結んだ線を何というか。",a:["等圧線","とうあつせん"],e:"天気図では同じ気圧の地点を等圧線で結びます。"},
+{c:"地学",q:"日本付近で、春や秋に天気が西から東へ変化する主な理由は何か。",a:["偏西風","へんせいふう"],e:"日本付近の上空では偏西風が吹いています。"},
+{c:"地学",q:"地球が太陽の周りを回る運動を何というか。",a:["公転","こうてん"],e:"地球は約1年かけて太陽の周りを公転します。"},
+{c:"地学",q:"地球が自分自身の軸を中心に回転する運動を何というか。",a:["自転","じてん"],e:"地球は約24時間で1回自転します。"},
+{c:"地学",q:"地球の自転によって起こる現象は何か。",a:["昼夜の変化","昼と夜","ひるとよる"],e:"地球の自転によって昼と夜が生じます。"},
+{c:"地学",q:"地球の公転と地軸の傾きによって起こるものは何か。",a:["季節の変化","季節変化","きせつのへんか"],e:"地軸が傾いたまま公転することで季節が変化します。"},
+{c:"地学",q:"太陽の光を受けて自ら光っている天体を何というか。",a:["恒星","こうせい"],e:"太陽は恒星です。"},
+{c:"地学",q:"恒星の周りを公転する天体を何というか。",a:["惑星","わくせい"],e:"地球などは太陽の周りを公転する惑星です。"},
+{c:"地学",q:"地球の衛星は何か。",a:["月","つき"],e:"月は地球の周りを公転する衛星です。"},
+{c:"地学",q:"月が太陽の光を反射して光って見えることを何というか。",a:["月の満ち欠け","つきのみちかけ"],e:"月そのものが光っているのではなく、太陽光を反射しています。"},
+{c:"地学",q:"太陽・月・地球が一直線に近く並び、月が太陽を隠す現象を何というか。",a:["日食","にっしょく"],e:"月によって太陽が隠される現象です。"},
+{c:"地学",q:"地球・月・太陽が一直線に近く並び、月が地球の影に入る現象を何というか。",a:["月食","げっしょく"],e:"月が地球の影に入る現象を月食といいます。"},
+{c:"地学",q:"地下の岩盤が急激にずれ動くことで発生する揺れを何というか。",a:["地震","じしん"],e:"地下の岩盤がずれることで地震が発生します。"}
+
+];
+
+let current=0;
+let activeQuestions=[];
+let userAnswers=[];
+let retryMode=false;
+let submitted=false;
+let timeLeft=45*60;
+let timerId=null;
+
+function normalizeText(v){
+return String(v)
+.trim()
+.toLowerCase()
+.normalize("NFKC")
+.replace(/[ \t\r\n　]/g,"")
+.replace(/[・･,，。．、\-ー―‐−]/g,"")
+.replace(/[ぁ-ゖ]/g,m=>m)
+.replace(/[ァ-ヶ]/g,m=>String.fromCharCode(m.charCodeAt(0)-0x60));
+}
+
+function isCorrect(q,index){
+const input=normalizeText(userAnswers[index]||"");
+if(!input)return false;
+return q.a.some(ans=>normalizeText(ans)===input);
+}
+
+function escapeHtml(v){
+return String(v)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+}
+
+function getWrong(){
+try{
+const x=JSON.parse(localStorage.getItem("scienceTestWrong")||"[]");
+return Array.isArray(x)?x:[];
+}catch(e){
+return [];
+}
+}
+
+function saveWrong(x){
+localStorage.setItem("scienceTestWrong",JSON.stringify(x));
+}
+
+function startTest(){
+retryMode=false;
+activeQuestions=[...questions];
+userAnswers=new Array(activeQuestions.length).fill("");
+current=0;
+submitted=false;
+timeLeft=45*60;
+openTest();
+}
+
+function startRetry(){
+const wrong=getWrong();
+
+if(!wrong.length){
+alert("再テストできる問題はありません。");
+return;
+}
+
+activeQuestions=wrong.map(i=>questions[i]).filter(Boolean);
+userAnswers=new Array(activeQuestions.length).fill("");
+current=0;
+submitted=false;
+retryMode=true;
+timeLeft=Math.min(45*60,Math.max(5*60,activeQuestions.length*60));
+
+openTest();
+}
+
+function openTest(){
+
+document.getElementById("startScreen").classList.add("hidden");
+document.getElementById("testScreen").classList.remove("hidden");
+document.getElementById("resultScreen").classList.add("hidden");
+
+buildGrid();
+showQuestion();
+updateTimer();
+
+if(timerId)clearInterval(timerId);
+
+timerId=setInterval(()=>{
+
+timeLeft--;
+
+if(timeLeft<=0){
+timeLeft=0;
+updateTimer();
+clearInterval(timerId);
+timerId=null;
+submitTest(true);
+return;
+}
+
+updateTimer();
+
+},1000);
+
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function updateTimer(){
+
+const m=Math.floor(timeLeft/60);
+const s=timeLeft%60;
+
+document.getElementById("timer").textContent=
+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+
+document.getElementById("timer").style.color=
+timeLeft<=300?"#d93025":"#333";
+}
+
+function buildGrid(){
+
+const grid=document.getElementById("questionGrid");
+grid.innerHTML="";
+
+activeQuestions.forEach((q,i)=>{
+
+const b=document.createElement("button");
+b.className="q-dot";
+b.textContent=i+1;
+
+b.onclick=()=>{
+current=i;
+showQuestion();
+window.scrollTo({top:0,behavior:"smooth"});
+};
+
+grid.appendChild(b);
+
+});
+}
+
+function updateGrid(){
+
+document.querySelectorAll(".q-dot").forEach((b,i)=>{
+
+b.classList.toggle("current",i===current);
+
+b.classList.toggle(
+"answered",
+String(userAnswers[i]||"").trim()!==""
+);
+
+});
+}
+
+function showQuestion(){
+
+const q=activeQuestions[current];
+
+document.getElementById("progress").style.width=
+((current+1)/activeQuestions.length*100)+"%";
+
+document.getElementById("question").innerHTML=`
+
+<div class="category">${escapeHtml(q.c)}</div>
+
+<div class="question-number">
+問題 ${current+1} / ${activeQuestions.length}
+</div>
+
+<div class="question-text">${escapeHtml(q.q)}</div>
+
+<input
+id="shortInput"
+class="short-input"
+type="text"
+inputmode="text"
+autocomplete="off"
+placeholder="答えを入力してください"
+value="${escapeHtml(userAnswers[current]||"")}"
+>
+
+`;
+
+const input=document.getElementById("shortInput");
+
+input.addEventListener("input",function(){
+setAnswer(this.value);
+});
+
+input.addEventListener("keydown",function(e){
+if(e.key==="Enter"){
+e.preventDefault();
+if(current===activeQuestions.length-1){
+submitTest();
+}else{
+nextQuestion();
+}
+}
+});
+
+document.getElementById("prevBtn").disabled=current===0;
+
+const next=document.getElementById("nextBtn");
+
+if(current===activeQuestions.length-1){
+
+next.textContent="提出する";
+next.className="danger";
+next.onclick=submitTest;
+
+}else{
+
+next.textContent="次の問題 →";
+next.className="primary";
+next.onclick=nextQuestion;
+
+}
+
+updateGrid();
+}
+
+function setAnswer(v){
+userAnswers[current]=v;
+updateGrid();
+}
+
+function prevQuestion(){
+
+if(current<=0)return;
+
+current--;
+showQuestion();
+
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function nextQuestion(){
+
+if(current<activeQuestions.length-1){
+
+current++;
+showQuestion();
+
+window.scrollTo({top:0,behavior:"smooth"});
+}
+}
+
+function submitTest(force=false){
+
+if(submitted)return;
+
+if(!force){
+
+const unanswered=userAnswers.filter(v=>!String(v).trim()).length;
+
+if(unanswered){
+
+if(!confirm(
+`未回答の問題が ${unanswered} 問あります。\nこのまま提出しますか？`
+))return;
+
+}
+}
+
+submitted=true;
+
+if(timerId){
+clearInterval(timerId);
+timerId=null;
+}
+
+let score=0;
+
+activeQuestions.forEach((q,i)=>{
+if(isCorrect(q,i))score++;
+});
+
+let wrong=[];
+
+activeQuestions.forEach((q,i)=>{
+
+if(!isCorrect(q,i)){
+
+const originalIndex=questions.indexOf(q);
+
+if(originalIndex>=0)wrong.push(originalIndex);
+
+}
+
+});
+
+saveWrong(wrong);
+
+document.getElementById("testScreen").classList.add("hidden");
+document.getElementById("resultScreen").classList.remove("hidden");
+
+const percent=Math.round(score/activeQuestions.length*100);
+
+document.getElementById("score").textContent=
+`${score} / ${activeQuestions.length}`;
+
+document.getElementById("percentage").textContent=
+`${percent}%`;
+
+let message="";
+
+if(percent===100){
+message="満点！すごい！";
+}else if(percent>=90){
+message="かなりよくできています！";
+}else if(percent>=80){
+message="あと少しでかなり強いです！";
+}else if(percent>=60){
+message="ここから復習すれば伸ばせます！";
+}else{
+message="間違えた問題を中心に復習しよう！";
+}
+
+if(retryMode&&percent===100){
+message="前回の間違いを全部克服しました！🎉";
+}
+
+document.getElementById("resultMessage").textContent=message;
+
+renderRetryResult();
+
+window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderRetryResult(){
+
+const wrong=getWrong();
+const area=document.getElementById("retryResultArea");
+
+if(!wrong.length){
+
+area.innerHTML=`
+<div class="retry-info" style="background:#e8f5e9;border-color:#a5d6a7">
+<b>間違えた問題はありません！</b><br>
+弱点克服完了です！
+</div>
+`;
+
+return;
+}
+
+const bio=wrong.filter(i=>questions[i]?.c==="生物").length;
+const chem=wrong.filter(i=>questions[i]?.c==="化学").length;
+const phy=wrong.filter(i=>questions[i]?.c==="物理").length;
+const earth=wrong.filter(i=>questions[i]?.c==="地学").length;
+
+area.innerHTML=`
+<div class="retry-info">
+まだ間違えている問題：<b>${wrong.length}問</b><br>
+生物：${bio}問　化学：${chem}問<br>
+物理：${phy}問　地学：${earth}問
+</div>
+
+<div class="actions">
+<button class="danger" onclick="startRetry()">
+間違えた問題を再テスト
+</button>
+</div>
+`;
+}
+
+function showAnswers(){
+
+const box=document.getElementById("answerScreen");
+const list=document.getElementById("answers");
+
+box.classList.remove("hidden");
+
+let html="";
+
+activeQuestions.forEach((q,i)=>{
+
+const correct=isCorrect(q,i);
+const user=userAnswers[i]||"未回答";
+
+html+=`
+<div class="answer-row">
+
+<b>${i+1}. ${escapeHtml(q.q)}</b>
+
+<div class="${correct?"correct":"incorrect"}">
+${correct?"○ 正解":"× 不正解"}
+</div>
+
+<div>
+あなたの答え：${escapeHtml(user)}
+</div>
+
+<div class="answer">
+正解：<b>${escapeHtml(q.a[0])}</b><br>
+<span style="color:#666;font-size:14px">
+${escapeHtml(q.e)}
+</span>
+</div>
+
+</div>
+`;
+
+});
+
+list.innerHTML=html;
+
+window.scrollTo({
+top:document.body.scrollHeight,
+behavior:"smooth"
+});
+}
+
+function renderStartRetry(){
+
+const wrong=getWrong();
+const area=document.getElementById("retryArea");
+
+if(!wrong.length){
+area.innerHTML="";
+return;
+}
+
+const bio=wrong.filter(i=>questions[i]?.c==="生物").length;
+const chem=wrong.filter(i=>questions[i]?.c==="化学").length;
+const phy=wrong.filter(i=>questions[i]?.c==="物理").length;
+const earth=wrong.filter(i=>questions[i]?.c==="地学").length;
+
+area.innerHTML=`
+<div class="retry-info">
+前回の間違い：<b>${wrong.length}問</b><br>
+生物：${bio}問　化学：${chem}問<br>
+物理：${phy}問　地学：${earth}問
+</div>
+
+<div class="actions">
+<button class="danger" onclick="startRetry()">
+間違えた問題を再テスト
+</button>
+</div>
+`;
+}
+
+renderStartRetry();
+
+</script>
+
+</body>
+</html>
